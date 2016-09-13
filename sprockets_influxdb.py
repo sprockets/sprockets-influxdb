@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 0, 0)
+version_info = (1, 0, 1)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -215,7 +215,8 @@ def install(url=None, auth_username=None, auth_password=None, io_loop=None,
     _io_loop = io_loop or ioloop.IOLoop.current()
     _max_batch_size = max_batch_size
     _max_clients = max_clients
-    _periodic_callback = ioloop.PeriodicCallback(_io_loop, submission_interval)
+    _periodic_callback = ioloop.PeriodicCallback(
+        _on_periodic_callback, submission_interval, _io_loop)
 
     # Set the base tags
     _base_tags.setdefault('hostname', socket.gethostname())
@@ -320,7 +321,7 @@ def set_submission_interval(seconds):
     if _periodic_callback.is_running():
         _periodic_callback.stop()
     _periodic_callback = ioloop.PeriodicCallback(_on_periodic_callback,
-                                                 seconds)
+                                                 seconds, _io_loop)
     # Start the periodic callback on IOLoop start if it's not already started
     _io_loop.add_callback(_periodic_callback.start)
 

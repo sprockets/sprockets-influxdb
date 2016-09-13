@@ -92,8 +92,8 @@ Version History
 ---------------
 Available at https://sprockets-influxdb.readthedocs.org/en/latest/history.html
 
-.. |Version| image:: https://img.shields.io/pypi/v/tornado-dynamodb.svg?
-   :target: http://badge.fury.io/py/tornado-dynamodb
+.. |Version| image:: https://img.shields.io/pypi/v/sprockets-influxdb.svg?
+   :target: http://badge.fury.io/py/sprockets-influxdb
 
 .. |Status| image:: https://img.shields.io/travis/sprockets/sprockets-influxdb.svg?
    :target: https://travis-ci.org/sprockets/sprockets-influxdb
@@ -101,8 +101,8 @@ Available at https://sprockets-influxdb.readthedocs.org/en/latest/history.html
 .. |Coverage| image:: https://img.shields.io/codecov/c/github/sprockets/sprockets-influxdb.svg?
    :target: https://codecov.io/github/sprockets/sprockets-influxdb?branch=master
 
-.. |Downloads| image:: https://img.shields.io/pypi/dm/tornado-dynamodb.svg?
-   :target: https://pypi.python.org/pypi/tornado-dynamodb
+.. |Downloads| image:: https://img.shields.io/pypi/dm/sprockets-influxdb.svg?
+   :target: https://pypi.python.org/pypi/sprockets-influxdb
 
-.. |License| image:: https://img.shields.io/pypi/l/tornado-dynamodb.svg?
-   :target: https://tornado-dynamodb.readthedocs.org
+.. |License| image:: https://img.shields.io/pypi/l/sprockets-influxdb.svg?
+   :target: https://sprockets-influxdb.readthedocs.org

@@ -5,7 +5,7 @@ import unittest
 import uuid
 
 from tornado import curl_httpclient, simple_httpclient, ioloop, testing
-from sprockets.clients import influxdb
+import sprockets_influxdb as influxdb
 
 from . import base
 

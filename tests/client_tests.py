@@ -6,7 +6,7 @@ import uuid
 
 from tornado import concurrent, gen, httpclient
 
-from sprockets.clients import influxdb
+import sprockets_influxdb as influxdb
 
 from . import base
 

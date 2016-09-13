@@ -6,8 +6,7 @@ import uuid
 
 from tornado import gen, testing, web
 
-from sprockets.clients import influxdb
-from sprockets.mixins import influxdb as mixin
+import sprockets_influxdb as influxdb
 
 LOGGER = logging.getLogger(__name__)
 Measurement = collections.namedtuple(
@@ -111,7 +110,7 @@ class AsyncServerTestCase(testing.AsyncHTTPTestCase):
             return
 
 
-class RequestHandler(mixin.InfluxDBMixin,
+class RequestHandler(influxdb.InfluxDBMixin,
                      web.RequestHandler):
 
     @gen.coroutine

@@ -4,7 +4,7 @@
 import os.path
 import setuptools
 
-from sprockets.clients import influxdb
+import sprockets_influxdb
 
 
 def read_requirements(filename):
@@ -26,14 +26,14 @@ def read_requirements(filename):
 
 setuptools.setup(
     name='sprockets-influxdb',
-    version=influxdb.__version__,
+    version=sprockets_influxdb.__version__,
     description='Buffering InfluxDB client and mixin for Tornado applications',
     author='AWeber Communications',
     author_email='api@aweber.com',
     url='https://github.com/sprockets/sprockets-influxdb',
     install_requires=read_requirements('installation.txt'),
     license='BSD',
-    namespace_packages=['sprockets', 'sprockets.clients', 'sprockets.mixins'],
+    py_modules=['sprockets_influxdb'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: No Input/Output (Daemon)',

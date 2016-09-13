@@ -1,7 +1,8 @@
 """
-InfluxDB Client
-===============
-
+Sprockets InfluxDB
+==================
+`sprockets_influxdb` includes both a buffering InfluxDB client and a Tornado
+RequestHandler mixin.
 
 """
 import contextlib
@@ -23,8 +24,8 @@ __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
 
 LOGGER = logging.getLogger(__name__)
 
-REQUEST_DATABASE = 'sprockets.clients.influxdb.database'
-USER_AGENT = 'sprockets.clients.influxdb/v{}'.format(__version__)
+REQUEST_DATABASE = 'sprockets_influxdb.database'
+USER_AGENT = 'sprockets-influxdb/v{}'.format(__version__)
 
 _base_tags = {}
 _base_url = 'http://localhost:8086/write'
@@ -42,6 +43,54 @@ _periodic_future = None
 _stopping = False
 _warn_threshold = 5000
 _writing = False
+
+
+class InfluxDBMixin(object):
+    """Mixin that automatically submits per-request measurements to InfluxDB
+    with the request duration.
+
+    The measurements will automatically add the following tags:
+
+     - Request `handler`
+     - Request `endpoint` (if enabled via a named URL)
+     - Request `method`
+     - Request `correlation_id` (if set)
+     - Response `status_code`
+
+    To add additional tags and fields, use the
+    :meth:`~sprockets_influxdb.Measurement.set_field`,
+    :meth:`~sprockets_influxdb.Measurement.set_tag`,
+    :meth:`~sprockets_influxdb.Measurement.set_tags`, and
+    :meth:`~sprockets_influxdb.Measurement.timer` methods of the
+    `influxdb` attribute of the `RequestHandler`.
+
+    """
+    def __init__(self, application, request, **kwargs):
+        self.application = application  # Set this here for reverse_url
+        self.__metrics = []
+        handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
+
+        self.influxdb = Measurement(
+            application.settings[REQUEST_DATABASE],
+            application.settings.get('service', 'request'))
+        self.influxdb.set_tags({'handler': handler, 'method': request.method})
+        try:
+            self.influxdb.set_tag('endpoint', self.reverse_url(handler))
+        except KeyError:
+            pass
+
+        # Call to super().__init__() needs to be *AFTER* we create our
+        # properties since it calls initialize() which may want to call
+        # methods like ``set_metric_tag``
+        super(InfluxDBMixin, self).__init__(application, request, **kwargs)
+
+    def on_finish(self):
+        super(InfluxDBMixin, self).on_finish()
+        if hasattr(self, 'correlation_id'):
+            self.influxdb.set_tag('correlation_id', self.correlation_id)
+        self.influxdb.set_tag('status_code', self._status_code)
+        self.influxdb.set_field('duration', self.request.request_time())
+        add_measurement(self.influxdb)
 
 
 def add_measurement(measurement):

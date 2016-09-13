@@ -1,0 +1,164 @@
+import os
+import random
+import socket
+import unittest
+import uuid
+
+from tornado import ioloop, testing
+import sprockets_influxdb as influxdb
+
+from . import base
+
+
+class EscapeStrTestCase(unittest.TestCase):
+
+    def test_escape_str(self):
+        expectation = 'foo\ bar\,\ baz'
+        self.assertEqual(influxdb._escape_str('foo bar, baz'), expectation)
+
+
+class InstallDefaultsTestCase(base.TestCase):
+
+    def setUp(self):
+        super(InstallDefaultsTestCase, self).setUp()
+        os.environ['ENVIRONMENT'] = str(uuid.uuid4())
+        os.environ['SERVICE'] = str(uuid.uuid4())
+        influxdb.install()
+
+    def test_calling_install_again_returns_false(self):
+        self.assertFalse(influxdb.install())
+
+    def test_dirty_flag_is_false(self):
+        self.assertFalse(influxdb._dirty)
+
+    def test_default_credentials(self):
+        self.assertEqual(influxdb._credentials, (None, None))
+
+    def test_default_tags(self):
+        expectation = {
+            'environment': os.environ['ENVIRONMENT'],
+            'service': os.environ['SERVICE'],
+            'hostname': socket.gethostname()
+        }
+        self.assertDictEqual(influxdb._base_tags, expectation)
+
+    def test_default_url(self):
+        self.assertEqual(influxdb._base_url, 'http://localhost:8086/write')
+
+    def test_http_client_defaults(self):
+        influxdb._create_http_client()
+        self.assertEqual(influxdb._http_client.defaults['user_agent'],
+                         influxdb.USER_AGENT)
+
+    def test_set_io_loop(self):
+        global_io_loop = ioloop.IOLoop.current()
+        self.assertEqual(influxdb._io_loop, global_io_loop)
+
+    def test_set_submission_interval(self):
+        expectation = 5000
+        self.assertEqual(influxdb._periodic_callback.callback_time,
+                         expectation)
+
+
+class InstallCredentialsTestCase(base.TestCase):
+
+    def test_credentials_from_environment_variables(self):
+        password = str(uuid.uuid4())
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
+        influxdb.install()
+
+        expectation = (os.environ['INFLUXDB_USER'], password)
+        self.assertEqual(influxdb._credentials, expectation)
+
+    def test_password_envvar_is_masked(self):
+        password = str(uuid.uuid4())
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
+        influxdb.install()
+
+        expectation = 'X' * len(password)
+        self.assertEqual(os.environ['INFLUXDB_PASSWORD'], expectation)
+
+    def test_http_client_defaults(self):
+        password = str(uuid.uuid4())
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
+        influxdb.install()
+        influxdb._create_http_client()
+        expectation = {
+            'auth_username': os.environ['INFLUXDB_USER'],
+            'auth_password': password,
+            'user_agent': influxdb.USER_AGENT
+        }
+        for key in expectation:
+            self.assertEqual(influxdb._http_client.defaults.get(key),
+                             expectation[key])
+
+
+class SetConfigurationTestCase(base.AsyncTestCase):
+
+    def test_set_auth_credentials(self):
+        influxdb.install()
+        username = str(uuid.uuid4())
+        password = str(uuid.uuid4())
+        influxdb.set_auth_credentials(username, password)
+        expectation = username, password
+        self.assertEqual(influxdb._credentials, expectation)
+        self.assertTrue(influxdb._dirty)
+
+    def test_set_base_url(self):
+        influxdb.install()
+        expectation = 'https://influxdb.com:8086/write'
+        influxdb.set_base_url(expectation)
+        self.assertEqual(influxdb._base_url, expectation)
+        self.assertTrue(influxdb._dirty)
+
+    def test_set_io_loop_invalid_raises(self):
+        influxdb.install()
+        with self.assertRaises(ValueError):
+            influxdb.set_io_loop('bad value')
+
+    def test_set_io_loop(self):
+        influxdb.install()
+        previous = influxdb._io_loop
+        io_loop = self.get_new_ioloop()
+
+        influxdb.set_io_loop(io_loop)
+        self.assertEqual(influxdb._io_loop, io_loop)
+        self.assertNotEqual(io_loop, previous)
+        self.assertTrue(influxdb._dirty)
+
+    def test_set_max_batch_size(self):
+        influxdb.install()
+        expectation = random.randint(1000, 100000)
+        influxdb.set_max_batch_size(expectation)
+        self.assertEqual(influxdb._max_batch_size, expectation)
+
+    def test_set_max_clients(self):
+        influxdb.install()
+        expectation = random.randint(1, 100)
+        influxdb.set_max_clients(expectation)
+        self.assertEqual(influxdb._max_clients, expectation)
+        self.assertTrue(influxdb._dirty)
+
+    @testing.gen_test()
+    def test_set_submission_interval(self):
+        io_loop = self.get_new_ioloop()
+        influxdb.install(io_loop=io_loop)
+        expectation = random.randint(1000, 10000)
+        previous = influxdb._periodic_callback
+        influxdb.set_submission_interval(expectation)
+        self.assertEqual(influxdb._periodic_callback.callback_time,
+                         expectation)
+        self.assertNotEqual(influxdb._periodic_callback, previous)
+
+
+class MeasurementTests(unittest.TestCase):
+
+    def test_initialization(self):
+        database = str(uuid.uuid4())
+        name = str(uuid.uuid4())
+        measurement = influxdb.Measurement(database, name)
+        self.assertEqual(measurement.database, database)
+        self.assertEqual(measurement.name, name)

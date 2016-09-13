@@ -10,3 +10,7 @@ nosetests.xml
 /downloads/
 /env/
 /htmlcov/
+env2
+env3
+.idea
+docs/_build

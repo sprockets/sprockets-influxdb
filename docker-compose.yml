@@ -1,0 +1,7 @@
+%YAML 1.2
+---
+influxdb:
+  image: influxdb
+  ports:
+    - 8083
+    - 8086

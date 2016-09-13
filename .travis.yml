@@ -1,0 +1,22 @@
+sudo: false
+language: python
+python:
+ - 2.7
+ - 3.4
+ - 3.5
+install:
+ - pip install -r requires/testing.txt
+ - pip install -e .
+script: nosetests --with-coverage
+after_success:
+ - codecov
+deploy:
+  distributions: sdist bdist_wheel
+  provider: pypi
+  user: sprockets
+  on:
+    python: 3.5
+    tags: true
+    all_branches: true
+  password:
+    secure: "Lp4o88mZabBParFzj8JNY6Tli+nP1kM8Vv8iSaXXDJEdRJaK/j6Kdedp9OtwxgUOPEn9kKSswYCPrjwJDHWskbSx79C1VdprgWqcwlxSrpNCxLYqNDL4Y+nJsbGtAnH64Kt6ugezfjAXCwG8TG8mFX3sS9Ch8+9e6Dup3j7UQdyOYNwo+SjVvO6Znk5F86h3bZlE19mVUvEhNWv0qM73/8OdUtrXGvcznbQDClk/OBz1BPyTkVI6Gm/JnF1N3SiDMAujLKuVyn6Lupakf75TmUT9fs64LOsJ4bYZPPsmqJpeOvVrLnGChWC0gA61AOY/c6whT5jQVwj+O0HwXqLU8kWbR8i5qy9E+6dQHGJOBkXk5ztp7CTM6Yt9HkvKETsWeyyQsmNAmt/3GNBK1KDALWVcaEunQW6i0MTZkF4KvkKF9XlyGQDR+Ka731PUyQb004oZcL2yr0gPBegpudEyhUlUr1IuU6qn0XtZU05wYnbhslffmLQ3Pr+fEgxknPciL/dhoxZ19zC7lXSvrSkgYHtyS6W8RFbLkl5e69nXBfNOyZ3iITTEQ2/P4MPlqzXx2QHw82jSc2X3zHpXvCfBTL7FA8NYFRktMHiGSelcdOKkfPvu7OxPKdLPzRlSt6EMSWynsTxlHvl3GA1wCzHsOd4k2c8pNn0IMB55j7Ht59k="

@@ -16,8 +16,8 @@ measurements = collections.deque()
 
 
 def clear_influxdb_module():
-    for variable in {'INFLUX_SCHEME', 'INFLUX_HOST', 'INFLUX_PORT',
-                     'INFLUX_USER', 'INFLUX_PASSWORD'}:
+    for variable in {'INFLUXDB_SCHEME', 'INFLUXDB_HOST', 'INFLUXDB_PORT',
+                     'INFLUXDB_USER', 'INFLUXDB_PASSWORD'}:
         if variable in os.environ:
             del os.environ[variable]
     influxdb._base_tags = {}

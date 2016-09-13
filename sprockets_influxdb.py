@@ -215,7 +215,7 @@ def install(url=None, auth_username=None, auth_password=None, io_loop=None,
     _io_loop = io_loop or ioloop.IOLoop.current()
     _max_batch_size = max_batch_size
     _max_clients = max_clients
-    _periodic_callback = ioloop.PeriodicCallback(submission_interval, _io_loop)
+    _periodic_callback = ioloop.PeriodicCallback(_io_loop, submission_interval)
 
     # Set the base tags
     _base_tags.setdefault('hostname', socket.gethostname())

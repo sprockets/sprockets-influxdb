@@ -64,30 +64,30 @@ class InstallCredentialsTestCase(base.TestCase):
 
     def test_credentials_from_environment_variables(self):
         password = str(uuid.uuid4())
-        os.environ['INFLUX_USER'] = str(uuid.uuid4())
-        os.environ['INFLUX_PASSWORD'] = password
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
         influxdb.install()
 
-        expectation = (os.environ['INFLUX_USER'], password)
+        expectation = (os.environ['INFLUXDB_USER'], password)
         self.assertEqual(influxdb._credentials, expectation)
 
     def test_password_envvar_is_masked(self):
         password = str(uuid.uuid4())
-        os.environ['INFLUX_USER'] = str(uuid.uuid4())
-        os.environ['INFLUX_PASSWORD'] = password
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
         influxdb.install()
 
         expectation = 'X' * len(password)
-        self.assertEqual(os.environ['INFLUX_PASSWORD'], expectation)
+        self.assertEqual(os.environ['INFLUXDB_PASSWORD'], expectation)
 
     def test_http_client_defaults(self):
         password = str(uuid.uuid4())
-        os.environ['INFLUX_USER'] = str(uuid.uuid4())
-        os.environ['INFLUX_PASSWORD'] = password
+        os.environ['INFLUXDB_USER'] = str(uuid.uuid4())
+        os.environ['INFLUXDB_PASSWORD'] = password
         influxdb.install()
         influxdb._create_http_client()
         expectation = {
-            'auth_username': os.environ['INFLUX_USER'],
+            'auth_username': os.environ['INFLUXDB_USER'],
             'auth_password': password,
             'user_agent': influxdb.USER_AGENT
         }

@@ -4,7 +4,7 @@ import socket
 import unittest
 import uuid
 
-from tornado import curl_httpclient, simple_httpclient, ioloop, testing
+from tornado import ioloop, testing
 import sprockets_influxdb as influxdb
 
 from . import base
@@ -44,11 +44,6 @@ class InstallDefaultsTestCase(base.TestCase):
 
     def test_default_url(self):
         self.assertEqual(influxdb._base_url, 'http://localhost:8086/write')
-
-    def test_http_client_type(self):
-        influxdb._create_http_client()
-        self.assertIsInstance(influxdb._http_client,
-                              simple_httpclient.AsyncHTTPClient)
 
     def test_http_client_defaults(self):
         influxdb._create_http_client()
@@ -99,15 +94,6 @@ class InstallCredentialsTestCase(base.TestCase):
         for key in expectation:
             self.assertEqual(influxdb._http_client.defaults.get(key),
                              expectation[key])
-
-
-class InstallCurlAsyncHTTPClientTestCase(base.TestCase):
-
-    def test_http_client_type(self):
-        influxdb.install(curl_client=True)
-        influxdb._create_http_client()
-        self.assertIsInstance(influxdb._http_client,
-                              curl_httpclient.AsyncHTTPClient)
 
 
 class SetConfigurationTestCase(base.AsyncTestCase):

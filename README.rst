@@ -19,7 +19,7 @@ Documentation is available at `sprockets-influxdb.readthedocs.io <https://sprock
 Configuration
 -------------
 Configuration can be managed by specifying arguments when invoking
-:meth:`sprockets_influxdb.install` or by using environment variables.
+``sprockets_influxdb.install`` or by using environment variables.
 
 For programmatic configuration, see the
 `sprockets_influxdb.install <https://sprockets-influxdb.readthedocs.io/en/latest/api.html#sprockets_influxdb.install>`_
@@ -43,7 +43,7 @@ The following table details the environment variable configuration options.
 
 Mixin Configuration
 ^^^^^^^^^^^^^^^^^^^
-The :class:`~sprockets_influxdb.InfluxDBMixin` class will automatically tag measurements
+The ``sprockets_influxdb.InfluxDBMixin`` class will automatically tag measurements
 with the application/service name if the ``SERVICE`` environment variable is set. It will
 also tag the measurement if the ``ENVIRONMENT`` environment variable is set with the environment
 that the application is running in. Finally, if you are using the
@@ -54,9 +54,9 @@ measurements will automatically be tagged with the correlation ID for a request.
 Example
 -------
 In the following example, a measurement is added to the ``example`` InfluxDB database
-with the measurement name of ``measurement-name``. When the :class:`~tornado.ioloop.IOLoop`
-is started, the :meth:`stop` method is invoked, calling :meth:`~sprockets_influxdb.shutdown`.
-:meth:`~sprockets_influxdb.shutdown` ensures that all of the buffered metrics are
+with the measurement name of ``measurement-name``. When the ``~tornado.ioloop.IOLoop``
+is started, the ``stop`` method is invoked, calling ``~sprockets_influxdb.shutdown``.
+``~sprockets_influxdb.shutdown`` ensures that all of the buffered metrics are
 written before the IOLoop is stopped.
 
 .. code:: python

@@ -51,18 +51,18 @@ class InfluxDBMixin(object):
 
     The measurements will automatically add the following tags:
 
-     - Request `handler`
-     - Request `endpoint` (if enabled via a named URL)
-     - Request `method`
-     - Request `correlation_id` (if set)
-     - Response `status_code`
+     - Request :data:`handler`
+     - Request :data:`endpoint` (if enabled via a named URL)
+     - Request :data:`method`
+     - Request :data:`correlation_id` (if set)
+     - Response :data:`status_code`
 
     To add additional tags and fields, use the
     :meth:`~sprockets_influxdb.Measurement.set_field`,
     :meth:`~sprockets_influxdb.Measurement.set_tag`,
     :meth:`~sprockets_influxdb.Measurement.set_tags`, and
     :meth:`~sprockets_influxdb.Measurement.timer` methods of the
-    `influxdb` attribute of the `RequestHandler`.
+    ``influxdb`` attribute of the :class:`~tornado.web.RequestHandler`.
 
     """
     def __init__(self, application, request, **kwargs):
@@ -94,10 +94,23 @@ class InfluxDBMixin(object):
 
 
 def add_measurement(measurement):
-    """Add measurement data to the stack of measurements to submit to InfluxDB
+    """Add measurement data to the submission buffer for eventual writing to
+    InfluxDB.
 
-    :param measurement: The measurement to add
-    :type: measurement: sprockets.clients.influxdb.client.Measurement
+    Example:
+
+    .. code:: python
+
+        import sprockets_influxdb as influxdb
+
+        measurement = influxdb.Measurement('example', 'measurement-name')
+        measurement.set_tag('foo', 'bar')
+        measurement.set_field('baz', 1.05)
+
+        influxdb.add_measurement(measurement)
+
+    :param :class:`~sprockets_influxdb.Measurement` measurement: The
+        measurement to add to the buffer for submission to InfluxDB.
 
     """
     if _stopping:
@@ -125,9 +138,12 @@ def add_measurement(measurement):
 
 
 def flush():
-    """Flush all pending measurements to InfluxDB
+    """Flush all pending measurements to InfluxDB. This will ensure that all
+    measurements that are in the buffer for any database are written. If the
+    requests fail, it will continue to try and submit the metrics until they
+    are successfully written.
 
-    :rtype: :cls:`~tornado.concurrent.Future`
+    :rtype: :class:`~tornado.concurrent.Future`
 
     """
     LOGGER.debug('Flushing')
@@ -141,34 +157,38 @@ def flush():
     return flush_future
 
 
-def install(**kwargs):
-    """Call this to install/setup the InfluxDB client collector
+def install(url=None, auth_username=None, auth_password=None, io_loop=None,
+            submission_interval=5000, max_batch_size=1000, max_clients=10,
+            base_tags=None):
+    """Call this to install/setup the InfluxDB client collector. All arguments
+    are optional.
 
-    :param kwargs: keyword parameters to pass to the
-        :class:`InfluxDBCollector` initializer.
+    :param str url: The InfluxDB API URL. If URL is not specified, the
+        ``INFLUXDB_SCHEME``, ``INFLUXDB_HOST`` and ``INFLUXDB_PORT``
+        environment variables will be used to construct the base URL. Default:
+        ``http://localhost:8086/write``
+    :param str auth_username: A username to use for InfluxDB authentication. If
+        not specified, the ``INFLUXDB_USER`` environment variable will
+        be used. Default: ``None``
+    :param str auth_password: A password to use for InfluxDB authentication. If
+        not specified, the ``INFLUXDB_PASSWORD`` environment variable will
+        be used. Default: ``None``
+    :param io_loop: A :class:`~tornado.ioloop.IOLoop` to use instead of the
+        version returned by :meth:`~tornado.ioloop.IOLoop.current`
+    :type io_loop: :class:`tornado.ioloop.IOLoop`
+    :param int submission_interval: How often to submit metric batches in
+        milliseconds. Default: ``5000``
+    :param int max_batch_size: The number of measurements to be submitted in a
+        single HTTP request. Default: ``1000``
+    :param int max_clients: The number of simultaneous batch submissions that
+        may be made at any given time. Default: ``10``
+    :param dict base_tags: Default tags that are to be submitted with each
+        measurement.  Default: ``None``
     :returns: :data:`True` if the client was installed by this call
         and :data:`False` otherwise.
 
-    Optional configuration values:
-
-    - **url** The InfluxDB API URL. If URL is not specified, the
-        ``INFLUX_SCHEME``, ``INFLUX_HOST`` and ``INFLUX_PORT`` environment
-        variables will be used to construct the base URL.
-    - **io_loop** A :class:`~tornado.ioloop.IOLoop` to use
-    - **submission_interval** How often to submit metric batches in
-        milliseconds. Default: ``5000``
-    - **max_batch_size** The number of measurements to be submitted in a
-        single HTTP request. Default: ``1000``
-    - **tags** Default tags that are to be submitted with each metric.
-    - **auth_username** A username to use for InfluxDB authentication
-    - **auth_password** A password to use for InfluxDB authentication
-    - **curl_client** If specified, use
-
-    If ``auth_password`` is specified as an environment variable, it will be
-    masked in the Python process.
-
-    :param dict kwargs: Keyword Arguments
-    :rtype: bool
+    If ``INFLUXDB_PASSWORD`` is specified as an environment variable, it will
+    be masked in the Python process.
 
     """
     global _base_tags, _base_url, _credentials, _installed, _io_loop, \
@@ -178,28 +198,24 @@ def install(**kwargs):
         LOGGER.warning('InfluxDB client already installed')
         return False
 
-    _base_url = kwargs.get('url', '{}://{}:{}/write'.format(
-        os.environ.get('INFLUX_SCHEME', 'http'),
-        os.environ.get('INFLUX_HOST', 'localhost'),
-        os.environ.get('INFLUX_PORT', 8086)))
+    _base_url = url or '{}://{}:{}/write'.format(
+        os.environ.get('INFLUXDB_SCHEME', 'http'),
+        os.environ.get('INFLUXDB_HOST', 'localhost'),
+        os.environ.get('INFLUXDB_PORT', 8086))
 
-    _credentials = (kwargs.get('auth_username',
-                               os.environ.get('INFLUX_USER', None)),
-                    kwargs.get('auth_password',
-                               os.environ.get('INFLUX_PASSWORD', None)))
+    _credentials = (auth_username or os.environ.get('INFLUXDB_USER', None),
+                    auth_password or os.environ.get('INFLUXDB_PASSWORD', None))
 
     # Don't leave the environment variable out there with the password
-    if os.environ.get('INFLUX_PASSWORD'):
-        os.environ['INFLUX_PASSWORD'] = \
-            'X' * len(os.environ['INFLUX_PASSWORD'])
+    if os.environ.get('INFLUXDB_PASSWORD'):
+        os.environ['INFLUXDB_PASSWORD'] = \
+            'X' * len(os.environ['INFLUXDB_PASSWORD'])
 
     # Submission related values
-    _io_loop = kwargs.get('io_loop', ioloop.IOLoop.current())
-    _max_batch_size = kwargs.get('max_batch_size', 1000)
-    _max_clients = kwargs.get('max_clients', 10)
-    _periodic_callback = ioloop.PeriodicCallback(
-        _on_periodic_callback, kwargs.get('submission_interval', 5000),
-        _io_loop)
+    _io_loop = io_loop or ioloop.IOLoop.current()
+    _max_batch_size = max_batch_size
+    _max_clients = max_clients
+    _periodic_callback = ioloop.PeriodicCallback(submission_interval, _io_loop)
 
     # Set the base tags
     _base_tags.setdefault('hostname', socket.gethostname())
@@ -207,12 +223,7 @@ def install(**kwargs):
         _base_tags.setdefault('environment', os.environ['ENVIRONMENT'])
     if os.environ.get('SERVICE'):
         _base_tags.setdefault('service', os.environ['SERVICE'])
-    _base_tags.update(kwargs.get('tags', {}))
-
-    # If specified, use CurlAsyncHTTPClient
-    if kwargs.get('curl_client'):
-        httpclient.AsyncHTTPClient.configure(
-            'tornado.curl_httpclient.CurlAsyncHTTPClient')
+    _base_tags.update(base_tags or {})
 
     # Start the periodic callback on IOLoop start
     _io_loop.add_callback(_periodic_callback.start)
@@ -321,7 +332,7 @@ def shutdown():
     Returns a future that is complete when all pending metrics have been
     submitted.
 
-    :rtype: :class:`~tornado.concurrent.TracebackFuture()`
+    :rtype: :class:`~tornado.concurrent.Future`
 
     """
     global _stopping
@@ -535,8 +546,21 @@ def _write_measurements():
 
 
 class Measurement(object):
-    """The :cls:`Measurement` class represents what will become a single row in
-    an InfluxDB database.
+    """The :class:`Measurement` class represents what will become a single row
+    in an InfluxDB database. Measurements are added to InfluxDB via the
+    :meth:`~sprockets_influxdb.add_measurement` method.
+
+    Example:
+
+    .. code:: python
+
+        import sprockets_influxdb as influxdb
+
+        measurement = Measurement('database-name', 'measurement-name')
+        measurement.set_tag('foo', 'bar')
+        measurement.set_field('baz', 1.05)
+
+        influxdb.add_measurement(measurement)
 
     :param str database: The database name to use when submitting
     :param str name: The measurement name

@@ -89,11 +89,15 @@ class InfluxDBMixin(object):
         if hasattr(self, 'correlation_id'):
             self.influxdb.set_tag('correlation_id', self.correlation_id)
         self.influxdb.set_tag('status_code', self._status_code)
-        ctype = self._headers['Content-Type'].decode('utf-8')
-        self.influxdb.set_tag('content_type', ctype.split(';')[0].strip())
         self.influxdb.set_field('duration', self.request.request_time())
         self.influxdb.set_field('content_length',
                                 int(self._headers['Content-Length']))
+        try:
+            ctype = self._headers['Content-Type'].decode('utf-8')
+        except (AttributeError, TypeError):
+            pass
+        else:
+            self.influxdb.set_tag('content_type', ctype.split(';')[0].strip())
         add_measurement(self.influxdb)
 
 

@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     headers, concurrent, httpclient, ioloop = None, None, None, None
 
-version_info = (1, 0, 4)
+version_info = (1, 0, 5)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -89,11 +89,6 @@ class InfluxDBMixin(object):
         if hasattr(self, 'correlation_id'):
             self.influxdb.set_field('correlation_id', self.correlation_id)
         self.influxdb.set_field('duration', self.request.request_time())
-        parsed = headers.parse_content_type(
-            self._headers['Content-Type'].decode('utf-8'))
-        self.influxdb.set_tag(
-            'content_type', '{}/{}'.format(
-                parsed.content_type, parsed.content_subtype))
         self.influxdb.set_tag('status_code', self._status_code)
         add_measurement(self.influxdb)
 

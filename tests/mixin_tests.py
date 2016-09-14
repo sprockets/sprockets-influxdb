@@ -26,7 +26,6 @@ class MeasurementTestCase(base.AsyncServerTestCase):
                          'tests.base.RequestHandler')
         self.assertEqual(measurement.tags['endpoint'], '/')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())
-        self.assertEqual(measurement.tags['content_type'], 'application/json')
 
         self.assertEqual(measurement.fields['content_length'], 16)
         self.assertGreater(float(measurement.fields['duration']), 0.001)
@@ -46,7 +45,6 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(measurement.tags['status_code'], '200')
         self.assertEqual(measurement.tags['method'], 'GET')
         self.assertEqual(measurement.tags['endpoint'], '/named')
-        self.assertEqual(measurement.tags['content_type'], 'application/json')
         self.assertEqual(
             measurement.tags['handler'], 'tests.base.NamedRequestHandler')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())

@@ -31,8 +31,8 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertGreater(float(measurement.fields['duration']), 0.001)
         self.assertLess(float(measurement.fields['duration']), 0.1)
 
-        self.assertGreaterEqual(measurement.timestamp, int(start_time))
-        self.assertLessEqual(measurement.timestamp, time.time())
+        self.assertGreaterEqual(measurement.timestamp/1000, int(start_time))
+        self.assertLessEqual(measurement.timestamp/1000, time.time())
 
     def test_measurement_with_named_endpoint(self):
         start_time = time.time()
@@ -55,8 +55,8 @@ class MeasurementTestCase(base.AsyncServerTestCase):
 
         self.assertGreater(float(measurement.fields['duration']), 0.001)
         self.assertLess(float(measurement.fields['duration']), 0.1)
-        self.assertGreaterEqual(measurement.timestamp, int(start_time))
-        self.assertLessEqual(measurement.timestamp, time.time())
+        self.assertGreaterEqual(measurement.timestamp/1000, int(start_time))
+        self.assertLessEqual(measurement.timestamp/1000, time.time())
 
     def test_measurement_with_param_endpoint(self):
         result = self.fetch('/param/100')

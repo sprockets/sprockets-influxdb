@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.0.6`_ (14 Sep 2016)
+----------------------
+- Move to millisecond precision
+
 `1.0.5`_ (14 Sep 2016)
 ----------------------
 - Remove ``content_type`` tag
@@ -34,10 +38,11 @@ Release History
 ----------------------
 - Initial release
 
+.. _1.0.6: https://github.com/sprockets/sprockets-influxdb/compare/1.0.5...1.0.6
 .. _1.0.5: https://github.com/sprockets/sprockets-influxdb/compare/1.0.4...1.0.5
 .. _1.0.4: https://github.com/sprockets/sprockets-influxdb/compare/1.0.3...1.0.4
 .. _1.0.3: https://github.com/sprockets/sprockets-influxdb/compare/1.0.2...1.0.3
 .. _1.0.2: https://github.com/sprockets/sprockets-influxdb/compare/1.0.1...1.0.2
 .. _1.0.1: https://github.com/sprockets/sprockets-influxdb/compare/1.0.0...1.0.1
 .. _1.0.0: https://github.com/sprockets/sprockets-influxdb/compare/0.0.0...1.0.0
-.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.0.5...master
+.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.0.6...master

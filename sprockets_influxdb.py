@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 0, 5)
+version_info = (1, 0, 6)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -89,6 +89,8 @@ class InfluxDBMixin(object):
             self.influxdb.set_field('correlation_id', self.correlation_id)
         self.influxdb.set_field('duration', self.request.request_time())
         self.influxdb.set_tag('status_code', self._status_code)
+        self.influxdb.set_tag('remote_ip', self.request.remote_ip)
+        self.influxdb.set_tag('remote_ip', self.request.remote_ip)
         add_measurement(self.influxdb)
 
 
@@ -498,7 +500,7 @@ def _write_measurements():
 
     # Submit a batch for each database
     for database in _measurements:
-        url = '{}?db={}&precision=seconds'.format(_base_url, database)
+        url = '{}?db={}&precision=ms'.format(_base_url, database)
 
         # Get the measurements to submit
         measurements = _measurements[database][:_max_batch_size]
@@ -575,7 +577,7 @@ class Measurement(object):
             ','.join(['{}={}'.format(self._escape(k), self._escape(v))
                       for k, v in self.tags.items()]),
             self._marshall_fields(),
-            int(time.time()))
+            int(time.time() * 1000))
 
     def set_field(self, name, value):
         """Set the value of a field in the measurement.

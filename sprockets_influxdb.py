@@ -10,7 +10,6 @@ import logging
 import os
 import socket
 import time
-import urllib
 
 try:
     from tornado import concurrent, httpclient, ioloop

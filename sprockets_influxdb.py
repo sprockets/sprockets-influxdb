@@ -75,7 +75,8 @@ class InfluxDBMixin(object):
             application.settings.get('service', 'request'))
         self.influxdb.set_tags({'handler': handler, 'method': request.method})
         try:
-            self.influxdb.set_tag('endpoint', self.reverse_url(handler))
+            self.influxdb.set_tag(
+                'endpoint', self.reverse_url(handler, request.arguments))
         except (KeyError, AssertionError):
             pass
 

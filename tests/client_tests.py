@@ -197,4 +197,4 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(influxdb._pending_measurements(), 1)
         self.flush()
         value = self.get_measurement()
-        self.assertAlmostEqual(float(value.fields['duration-test']), 0.1, 2)
+        self.assertAlmostEqual(float(value.fields['duration-test']), 0.1, 1)

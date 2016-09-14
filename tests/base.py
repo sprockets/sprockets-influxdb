@@ -92,6 +92,8 @@ class AsyncServerTestCase(testing.AsyncHTTPTestCase):
                     web.url('/', RequestHandler),
                     web.url('/named', NamedRequestHandler,
                             name='tests.base.NamedRequestHandler'),
+                    web.url('/param/(?P<id>\d+)', ParamRequestHandler,
+                            name='tests.base.ParamRequestHandler'),
                     web.url('/write', FakeInfluxDBHandler)
                 ],
                 **settings)
@@ -123,6 +125,17 @@ class RequestHandler(influxdb.InfluxDBMixin,
 class NamedRequestHandler(RequestHandler):
 
     correlation_id = str(uuid.uuid4())
+
+
+class ParamRequestHandler(RequestHandler):
+
+    correlation_id = str(uuid.uuid4())
+
+    @gen.coroutine
+    def get(self, *args, **kwargs):
+        yield gen.sleep(0.01)
+        self.write({'id': kwargs['id']})
+        self.finish()
 
 
 class FakeInfluxDBHandler(web.RequestHandler):

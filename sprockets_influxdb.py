@@ -10,6 +10,7 @@ import logging
 import os
 import socket
 import time
+import urllib
 
 try:
     from tornado import concurrent, httpclient, ioloop
@@ -66,24 +67,19 @@ class InfluxDBMixin(object):
 
     """
     def __init__(self, application, request, **kwargs):
-        self.application = application  # Set this here for reverse_url
-        self.__metrics = []
-        handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
-
         self.influxdb = Measurement(
             application.settings[REQUEST_DATABASE],
             application.settings.get('service', 'request'))
-        self.influxdb.set_tags({'handler': handler, 'method': request.method})
-        try:
-            self.influxdb.set_tag(
-                'endpoint', self.reverse_url(handler, request.arguments))
-        except (KeyError, AssertionError):
-            pass
-
-        # Call to super().__init__() needs to be *AFTER* we create our
-        # properties since it calls initialize() which may want to call
-        # methods like ``set_metric_tag``
         super(InfluxDBMixin, self).__init__(application, request, **kwargs)
+        handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
+        self.influxdb.set_tags({'handler': handler, 'method': request.method})
+        for _host, handlers in application.handlers:
+            for handler in handlers:
+                match = handler.regex.match(request.path)
+                if match:
+                    self.influxdb.set_tag('endpoint',
+                                          handler.regex.pattern.rstrip('$'))
+                    break
 
     def on_finish(self):
         super(InfluxDBMixin, self).on_finish()

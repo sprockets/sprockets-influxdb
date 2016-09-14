@@ -5,8 +5,7 @@ Release History
 
 `1.0.2`_ (13 Sep 2016)
 ----------------------
-- Swallow assertion errors from tornado.web.RequestHandler.reverse_url
-- Pass in request arguments into tornado.web.RequestHandler.reverse_url
+- Don't use RequestHandler.reverse_url to get the endpoint pattern in the mixin
 
 `1.0.1`_ (13 Sep 2016)
 ----------------------

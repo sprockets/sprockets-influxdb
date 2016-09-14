@@ -24,7 +24,7 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(measurement.tags['method'], 'GET')
         self.assertEqual(
             measurement.tags['handler'], 'tests.base.RequestHandler')
-        self.assertNotIn('endpoint', measurement.tags)
+        self.assertEqual(measurement.tags['endpoint'], '/')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())
 
         self.assertGreater(float(measurement.fields['duration']), 0.001)
@@ -35,7 +35,7 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertGreaterEqual(then, int(start_time))
         self.assertLessEqual(then, time.time())
 
-    def test_measurement_without_endpoint(self):
+    def test_measurement_with_named_endpoint(self):
         start_time = time.time()
         result = self.fetch('/named')
         self.assertEqual(result.code, 200)
@@ -60,3 +60,14 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         then = nanos_since_epoch / 1000000000
         self.assertGreaterEqual(then, int(start_time))
         self.assertLessEqual(then, time.time())
+
+    def test_measurement_with_param_endpoint(self):
+        result = self.fetch('/param/100')
+        self.assertEqual(result.code, 200)
+        measurement = self.get_measurement()
+        self.assertIsNotNone(measurement)
+        self.assertEqual(measurement.db, 'database-name')
+        self.assertEqual(measurement.name, 'my-service')
+        self.assertEqual(measurement.tags['status_code'], '200')
+        self.assertEqual(measurement.tags['method'], 'GET')
+        self.assertEqual(measurement.tags['endpoint'], '/param/(?P<id>\d+)')

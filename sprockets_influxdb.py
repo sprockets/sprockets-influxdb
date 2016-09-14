@@ -72,7 +72,9 @@ class InfluxDBMixin(object):
         super(InfluxDBMixin, self).__init__(application, request, **kwargs)
         handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
         self.influxdb.set_tags({'handler': handler, 'method': request.method})
-        for _host, handlers in application.handlers:
+        for host, handlers in application.handlers:
+            if not host.match(request.host):
+                continue
             for handler in handlers:
                 match = handler.regex.match(request.path)
                 if match:

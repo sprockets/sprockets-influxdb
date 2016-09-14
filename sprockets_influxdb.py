@@ -17,7 +17,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 0, 1)
+version_info = (1, 0, 2)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -76,7 +76,7 @@ class InfluxDBMixin(object):
         self.influxdb.set_tags({'handler': handler, 'method': request.method})
         try:
             self.influxdb.set_tag('endpoint', self.reverse_url(handler))
-        except KeyError:
+        except (KeyError, AssertionError):
             pass
 
         # Call to super().__init__() needs to be *AFTER* we create our

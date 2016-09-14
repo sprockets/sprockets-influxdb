@@ -10,19 +10,11 @@ import sprockets_influxdb as influxdb
 from . import base
 
 
-class EscapeStrTestCase(unittest.TestCase):
-
-    def test_escape_str(self):
-        expectation = 'foo\ bar\,\ baz'
-        self.assertEqual(influxdb._escape_str('foo bar, baz'), expectation)
-
-
 class InstallDefaultsTestCase(base.TestCase):
 
     def setUp(self):
         super(InstallDefaultsTestCase, self).setUp()
         os.environ['ENVIRONMENT'] = str(uuid.uuid4())
-        os.environ['SERVICE'] = str(uuid.uuid4())
         influxdb.install()
 
     def test_calling_install_again_returns_false(self):
@@ -37,7 +29,6 @@ class InstallDefaultsTestCase(base.TestCase):
     def test_default_tags(self):
         expectation = {
             'environment': os.environ['ENVIRONMENT'],
-            'service': os.environ['SERVICE'],
             'hostname': socket.gethostname()
         }
         self.assertDictEqual(influxdb._base_tags, expectation)

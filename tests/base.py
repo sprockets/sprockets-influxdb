@@ -1,6 +1,7 @@
 import collections
 import logging
 import os
+import re
 import unittest
 import uuid
 
@@ -9,6 +10,17 @@ from tornado import gen, testing, web
 import sprockets_influxdb as influxdb
 
 LOGGER = logging.getLogger(__name__)
+
+LINE_PATTERN = re.compile(r'^([\w\-\\, ]+)(?<!\\),([\\\w=\-_.,/"\(\)<>?\+]+)(?'
+                          r'<!\\) ([\w=\-/\\_.,;" ]+)(?<!\\) (\d+)$')
+TAG_PATTERN = re.compile(r'(?P<name>(?:(?:\\ )|(?:\\,)|(?:[\w\-_.]+))+)=(?P<va'
+                         r'lue>(?:(?:\\ )|(?:\\,)|(?:[\\\w\-_./\(\)<>?\+]+))+)')
+FIELD_PATTERN = re.compile(r'(?P<key>(?:(?:\\ )|(?:\\,)|(?:\\")|(?:[\w\-_./]+)'
+                           r')+)=(?P<value>(?:(?:(?:(?:\\ )|(?:\\,)|(?:\\")|(?'
+                           r':[\w\-_./\;]+))+)|(?:"(?:(?:\\ )|(?:\\,)|(?:\\")|'
+                           r'(?:[\w\-_./\;=]+))+")))')
+
+
 Measurement = collections.namedtuple(
     'measurement', ['db', 'timestamp', 'name', 'tags', 'fields', 'headers'])
 
@@ -39,9 +51,8 @@ def clear_influxdb_module():
 
 
 def _strip_backslashes(line):
-    if '\\ ' in line or '\\,' in line:
-        line = line.replace('\\ ', ' ')
-        line = line.replace('\\,', ',')
+    for sequence in {'\\ ', '\\,', '\\"'}:
+        line = line.replace(sequence, sequence[-1])
     return line
 
 
@@ -144,19 +155,28 @@ class FakeInfluxDBHandler(web.RequestHandler):
         db = self.get_query_argument('db')
         payload = self.request.body.decode('utf-8')
         for line in payload.splitlines():
-            values = _strip_backslashes(line.split())
-            key = values[0]
-            fields = values[1:-1]
-            timestamp = values[-1]
-            name = key.split(',')[0]
-            tags = dict([a.split('=') for a in key.split(',')[1:]])
-            fields = dict([a.split('=') for a in fields])
+            LOGGER.debug('Line: %r', line)
+            parts = LINE_PATTERN.match(line.encode('utf-8'))
+            name, tags_str, fields_str, timestamp = parts.groups()
+
+            matches = TAG_PATTERN.findall(tags_str)
+            tags = dict([(_strip_backslashes(k), _strip_backslashes(v))
+                         for k, v in matches])
+
+            matches = FIELD_PATTERN.findall(fields_str)
+            fields = dict([(_strip_backslashes(k), _strip_backslashes(v))
+                           for k, v in matches])
             for key, value in fields.items():
-                if '.' in value:
-                    fields[key] = float(value)
+                if value[-1] == 'i' and value[:-1].isdigit():
+                    fields[key] = int(value[:-1])
+                elif value[0] == '"' and value[-1] == '"':
+                    fields[key] = value[1:-1]
+                elif value.lower() in {'t', 'true', 'f', 'false'}:
+                    fields[key] = value.lower() in {'t', 'true'}
                 else:
-                    fields[key] = int(value)
+                    fields[key] = float(value)
+
             measurements.append(
-                Measurement(db, timestamp, name, tags, fields,
+                Measurement(db, int(timestamp), name, tags, fields,
                             self.request.headers))
         self.set_status(204)

@@ -12,12 +12,13 @@ import socket
 import time
 
 try:
+    from ietfparse import headers
     from tornado import concurrent, httpclient, ioloop
 except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
-    concurrent, httpclient, ioloop = None, None, None
+    headers, concurrent, httpclient, ioloop = None, None, None, None
 
-version_info = (1, 0, 3)
+version_info = (1, 0, 4)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -72,9 +73,6 @@ class InfluxDBMixin(object):
         super(InfluxDBMixin, self).__init__(application, request, **kwargs)
         handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
         self.influxdb.set_tags({'handler': handler, 'method': request.method})
-        if request.headers.get('Accept'):
-            accept = request.headers.get('Accept').split(';')[0].strip()
-            self.influxdb.set_tag('accept', accept)
         for host, handlers in application.handlers:
             if not host.match(request.host):
                 continue
@@ -86,18 +84,16 @@ class InfluxDBMixin(object):
                     break
 
     def on_finish(self):
-        if hasattr(self, 'correlation_id'):
-            self.influxdb.set_tag('correlation_id', self.correlation_id)
-        self.influxdb.set_tag('status_code', self._status_code)
-        self.influxdb.set_field('duration', self.request.request_time())
         self.influxdb.set_field('content_length',
                                 int(self._headers['Content-Length']))
-        try:
-            ctype = self._headers['Content-Type'].decode('utf-8')
-        except (AttributeError, TypeError):
-            pass
-        else:
-            self.influxdb.set_tag('content_type', ctype.split(';')[0].strip())
+        if hasattr(self, 'correlation_id'):
+            self.influxdb.set_field('correlation_id', self.correlation_id)
+        self.influxdb.set_field('duration', self.request.request_time())
+        parsed = headers.parse_content_type(self._headers['Content-Type'])
+        self.influxdb.set_tag(
+            'content_type', '{}/{}'.format(
+                parsed.content_type, parsed.content_subtype))
+        self.influxdb.set_tag('status_code', self._status_code)
         add_measurement(self.influxdb)
 
 
@@ -132,16 +128,8 @@ def add_measurement(measurement):
     if measurement.database not in _measurements:
         _measurements[measurement.database] = []
 
-    tags = ','.join(['{}={}'.format(k, v)
-                     for k, v in measurement.tags.items()])
-    fields = ' '.join(['{}={}'.format(k, v)
-                       for k, v in measurement.fields.items()])
-
-    LOGGER.debug('Appending measurement to %s', measurement.database)
-    _measurements[measurement.database].append(
-        '{},{} {} {:d}'.format(
-            measurement.name, tags, fields, int(time.time() * 1000000000)))
-
+    value = measurement.marshall()
+    _measurements[measurement.database].append(value)
     _maybe_warn_about_buffer_size()
 
 
@@ -230,8 +218,6 @@ def install(url=None, auth_username=None, auth_password=None, io_loop=None,
     _base_tags.setdefault('hostname', socket.gethostname())
     if os.environ.get('ENVIRONMENT'):
         _base_tags.setdefault('environment', os.environ['ENVIRONMENT'])
-    if os.environ.get('SERVICE'):
-        _base_tags.setdefault('service', os.environ['SERVICE'])
     _base_tags.update(base_tags or {})
 
     # Start the periodic callback on IOLoop start
@@ -373,20 +359,6 @@ def _create_http_client():
         max_clients=_max_clients)
 
 
-def _escape_str(value):
-    """Escape the value with InfluxDB's wonderful escaping logic:
-
-    "Measurement names, tag keys, and tag values must escape any spaces or
-    commas using a backslash (\). For example: \ and \,. All tag values are
-    stored as strings and should not be surrounded in quotes."
-
-    :param str value: The value to be escaped
-    :rtype: str
-
-    """
-    return str(value).replace(' ', '\ ').replace(',', '\,')
-
-
 def _flush_wait(flush_future, write_future):
     """Pause briefly allowing any pending metric writes to complete before
     shutting down.
@@ -517,7 +489,6 @@ def _write_measurements():
         LOGGER.warning('Currently writing measurements, skipping write')
         future.set_result(False)
     elif not _pending_measurements():
-        LOGGER.debug('No pending measurements, skipping write')
         future.set_result(True)
 
     # Exit early if there's an error condition
@@ -532,7 +503,7 @@ def _write_measurements():
 
     # Submit a batch for each database
     for database in _measurements:
-        url = '{}?db={}'.format(_base_url, database)
+        url = '{}?db={}&precision=seconds'.format(_base_url, database)
 
         # Get the measurements to submit
         measurements = _measurements[database][:_max_batch_size]
@@ -577,7 +548,7 @@ class Measurement(object):
     """
     def __init__(self, database, name):
         self.database = database
-        self.name = _escape_str(name)
+        self.name = name
         self.fields = {}
         self.tags = dict(_base_tags)
 
@@ -598,17 +569,31 @@ class Measurement(object):
         finally:
             self.set_field(name, max(time.time(), start) - start)
 
+    def marshall(self):
+        """Return the measurement in the line protocol format.
+
+        :rtype: str
+
+        """
+        return '{},{} {} {}'.format(
+            self._escape(self.name),
+            ','.join(['{}={}'.format(self._escape(k), self._escape(v))
+                      for k, v in self.tags.items()]),
+            self._marshall_fields(),
+            int(time.time()))
+
     def set_field(self, name, value):
         """Set the value of a field in the measurement.
 
         :param str name: The name of the field to set the value for
-        :param int|float value: The value of the field
+        :param int|float|bool|str value: The value of the field
         :raises: ValueError
 
         """
-        if not isinstance(value, int) and not isinstance(value, float):
-            raise ValueError('Value must be an integer or float')
-        self.fields[_escape_str(name)] = str(value)
+        if not any([isinstance(value, t) for t in {int, float, bool, str}]):
+            LOGGER.debug('Invalid field value: %r', value)
+            raise ValueError('Value must be a str, bool, integer, or float')
+        self.fields[name] = value
 
     def set_tag(self, name, value):
         """Set a tag on the measurement.
@@ -620,7 +605,7 @@ class Measurement(object):
         if one exists.
 
         """
-        self.tags[_escape_str(name)] = _escape_str(value)
+        self.tags[name] = value
 
     def set_tags(self, tags):
         """Set multiple tags for the measurement.
@@ -633,3 +618,38 @@ class Measurement(object):
         """
         for key, value in tags.items():
             self.set_tag(key, value)
+
+    @staticmethod
+    def _escape(value):
+        """Escape a string (key or value) for InfluxDB's line protocol.
+
+        :param str|int|float|bool value: The value to be escaped
+        :rtype: str
+
+        """
+        value = str(value)
+        for char, escaped in {' ': '\ ', ',': '\,', '"': '\"'}.items():
+            value = value.replace(char, escaped)
+        return value
+
+    def _marshall_fields(self):
+        """Convert the field dict into the string segment of field key/value
+        pairs.
+
+        :rtype: str
+
+        """
+        values = {}
+        for key, value in self.fields.items():
+            if (isinstance(value, int) or
+                    (isinstance(value, str) and value.isdigit() and
+                     '.' not in value)):
+                values[key] = '{}i'.format(value)
+            elif isinstance(value, bool):
+                values[key] = self._escape(value)
+            elif isinstance(value, float):
+                values[key] = '{}'.format(value)
+            elif isinstance(value, str):
+                values[key] = '"{}"'.format(self._escape(value))
+        return ','.join(['{}={}'.format(self._escape(k), v)
+                         for k, v in values.items()])

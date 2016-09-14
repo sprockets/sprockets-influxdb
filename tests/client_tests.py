@@ -85,7 +85,7 @@ class MeasurementTestCase(base.AsyncServerTestCase):
             database = str(uuid.uuid4())
             name = str(uuid.uuid4())
             measurement = influxdb.Measurement(database, name)
-            measurement.set_field('foo', 'bar')
+            measurement.set_field('foo', ['bar'])
 
     def test_missing_value_raises_value_error(self):
         with self.assertRaises(ValueError):

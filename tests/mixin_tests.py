@@ -14,7 +14,7 @@ class MeasurementTestCase(base.AsyncServerTestCase):
 
     def test_measurement_was_sent(self):
         start_time = time.time()
-        result = self.fetch('/')
+        result = self.fetch('/', headers={'Accept': 'application/json'})
         self.assertEqual(result.code, 200)
         measurement = self.get_measurement()
         self.assertIsNotNone(measurement)
@@ -26,9 +26,11 @@ class MeasurementTestCase(base.AsyncServerTestCase):
             measurement.tags['handler'], 'tests.base.RequestHandler')
         self.assertEqual(measurement.tags['endpoint'], '/')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())
-
+        self.assertEqual(measurement.fields['content_length'], 16)
         self.assertGreater(float(measurement.fields['duration']), 0.001)
         self.assertLess(float(measurement.fields['duration']), 0.1)
+        self.assertEqual(measurement.tags['accept'], 'application/json')
+        self.assertEqual(measurement.tags['content_type'], 'application/json')
 
         nanos_since_epoch = int(measurement.timestamp)
         then = nanos_since_epoch / 1000000000
@@ -46,12 +48,15 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(measurement.tags['status_code'], '200')
         self.assertEqual(measurement.tags['method'], 'GET')
         self.assertEqual(measurement.tags['endpoint'], '/named')
+        self.assertEqual(measurement.tags['content_type'], 'application/json')
         self.assertEqual(
             measurement.tags['correlation_id'],
             base.NamedRequestHandler.correlation_id)
         self.assertEqual(
             measurement.tags['handler'], 'tests.base.NamedRequestHandler')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())
+        self.assertEqual(measurement.fields['content_length'], 16)
+        self.assertNotIn('accept', measurement.tags)
 
         self.assertGreater(float(measurement.fields['duration']), 0.001)
         self.assertLess(float(measurement.fields['duration']), 0.1)
@@ -71,3 +76,4 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(measurement.tags['status_code'], '200')
         self.assertEqual(measurement.tags['method'], 'GET')
         self.assertEqual(measurement.tags['endpoint'], '/param/(?P<id>\d+)')
+        self.assertEqual(measurement.fields['content_length'], 13)

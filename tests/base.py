@@ -118,7 +118,7 @@ class RequestHandler(influxdb.InfluxDBMixin,
     @gen.coroutine
     def get(self, *args, **kwargs):
         yield gen.sleep(0.01)
-        self.write('{"result": "ok"}')
+        self.write({'result': 'ok'})
         self.finish()
 
 

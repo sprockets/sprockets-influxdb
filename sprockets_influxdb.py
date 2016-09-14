@@ -72,6 +72,9 @@ class InfluxDBMixin(object):
         super(InfluxDBMixin, self).__init__(application, request, **kwargs)
         handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
         self.influxdb.set_tags({'handler': handler, 'method': request.method})
+        if request.headers.get('Accept'):
+            accept = request.headers['Accept'].split(';')[0].strip()
+            self.influxdb.set_tag('accept', accept)
         for host, handlers in application.handlers:
             if not host.match(request.host):
                 continue
@@ -83,11 +86,14 @@ class InfluxDBMixin(object):
                     break
 
     def on_finish(self):
-        super(InfluxDBMixin, self).on_finish()
         if hasattr(self, 'correlation_id'):
             self.influxdb.set_tag('correlation_id', self.correlation_id)
         self.influxdb.set_tag('status_code', self._status_code)
+        content_type = self._headers['Content-Type'].split(';')[0].strip()
+        self.influxdb.set_tag('content_type', content_type)
         self.influxdb.set_field('duration', self.request.request_time())
+        self.influxdb.set_field('content_length',
+                                int(self._headers['Content-Length']))
         add_measurement(self.influxdb)
 
 

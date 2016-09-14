@@ -12,11 +12,10 @@ import socket
 import time
 
 try:
-    from ietfparse import headers
     from tornado import concurrent, httpclient, ioloop
 except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
-    headers, concurrent, httpclient, ioloop = None, None, None, None
+    concurrent, httpclient, ioloop = None, None, None
 
 version_info = (1, 0, 5)
 __version__ = '.'.join(str(v) for v in version_info)

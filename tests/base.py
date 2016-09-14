@@ -156,7 +156,7 @@ class FakeInfluxDBHandler(web.RequestHandler):
         payload = self.request.body.decode('utf-8')
         for line in payload.splitlines():
             LOGGER.debug('Line: %r', line)
-            parts = LINE_PATTERN.match(line.encode('utf-8'))
+            parts = LINE_PATTERN.match(line)
             name, tags_str, fields_str, timestamp = parts.groups()
 
             matches = TAG_PATTERN.findall(tags_str)

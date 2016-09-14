@@ -89,7 +89,8 @@ class InfluxDBMixin(object):
         if hasattr(self, 'correlation_id'):
             self.influxdb.set_field('correlation_id', self.correlation_id)
         self.influxdb.set_field('duration', self.request.request_time())
-        parsed = headers.parse_content_type(self._headers['Content-Type'])
+        parsed = headers.parse_content_type(
+            self._headers['Content-Type'].decode('utf-8'))
         self.influxdb.set_tag(
             'content_type', '{}/{}'.format(
                 parsed.content_type, parsed.content_subtype))

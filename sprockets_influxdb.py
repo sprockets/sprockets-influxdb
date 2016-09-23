@@ -30,6 +30,13 @@ LOGGER = logging.getLogger(__name__)
 REQUEST_DATABASE = 'sprockets_influxdb.database'
 USER_AGENT = 'sprockets-influxdb/v{}'.format(__version__)
 
+try:
+    TimeoutError
+except NameError:  # Python 2.7 compatibility
+    class TimeoutError(Exception):
+        pass
+
+
 _base_tags = {}
 _base_url = 'http://localhost:8086/write'
 _credentials = None, None

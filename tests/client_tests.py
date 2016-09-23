@@ -1,7 +1,6 @@
 import base64
 import random
 import mock
-import time
 import uuid
 
 from tornado import concurrent, gen, httpclient
@@ -110,11 +109,7 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         with mock.patch('tornado.httpclient.AsyncHTTPClient.fetch') as fetch:
             future = concurrent.Future()
             fetch.return_value = future
-            request = httpclient.HTTPRequest('http://localhost/write?db')
-            future.set_result(
-                httpclient.HTTPResponse(
-                    request, 599, error=OSError(),
-                    request_time=time.time() - request.start_time))
+            future.set_exception(httpclient.HTTPError(599, 'TestError'))
             self.flush()
         self.assertEqual(influxdb._pending_measurements(), 1)
         self.flush()

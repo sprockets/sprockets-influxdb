@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.1.0`_ (23 Sep 2016)
+----------------------
+- Submit measurements one at a time for a rejected batch, logging error responses
+
 `1.0.7`_ (14 Sep 2016)
 ----------------------
 - Have a default content length for responses without one
@@ -24,7 +28,6 @@ Release History
 - Change the precision to second precision, per the InfluxDB docs (use the most
     coarse precision for better compression)
 
-
 `1.0.3`_ (13 Sep 2016)
 ----------------------
 - Add a response ``content_length`` field, an ``accept`` tag (if set in request
@@ -42,6 +45,8 @@ Release History
 ----------------------
 - Initial release
 
+.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.1.0...master
+.. _1.1.0: https://github.com/sprockets/sprockets-influxdb/compare/1.0.7...1.1.0
 .. _1.0.7: https://github.com/sprockets/sprockets-influxdb/compare/1.0.6...1.0.7
 .. _1.0.6: https://github.com/sprockets/sprockets-influxdb/compare/1.0.5...1.0.6
 .. _1.0.5: https://github.com/sprockets/sprockets-influxdb/compare/1.0.4...1.0.5
@@ -50,4 +55,3 @@ Release History
 .. _1.0.2: https://github.com/sprockets/sprockets-influxdb/compare/1.0.1...1.0.2
 .. _1.0.1: https://github.com/sprockets/sprockets-influxdb/compare/1.0.0...1.0.1
 .. _1.0.0: https://github.com/sprockets/sprockets-influxdb/compare/0.0.0...1.0.0
-.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.0.7...master

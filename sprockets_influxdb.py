@@ -8,8 +8,11 @@ RequestHandler mixin.
 import contextlib
 import logging
 import os
+import select
 import socket
+import ssl
 import time
+import uuid
 
 try:
     from tornado import concurrent, httpclient, ioloop
@@ -17,7 +20,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 0, 7)
+version_info = (1, 1, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -387,21 +390,27 @@ def _futures_wait(wait_future, futures):
     global _writing
 
     remaining = []
-    for (future, database, measurements) in futures:
+    for (future, batch, database, measurements) in futures:
 
         # If the future hasn't completed, add it to the remaining stack
         if not future.done():
-            remaining.append((future, database, measurements))
+            remaining.append((future, batch, database, measurements))
             continue
 
         # Get the result of the HTTP request, processing any errors
-        try:
-            result = future.result()
-        except (httpclient.HTTPError, OSError, socket.error) as error:
-            _on_request_error(error, database, measurements)
-        else:
-            if result.code >= 400:
-                _on_request_error(result.code, database, measurements)
+        error = future.exception()
+        if isinstance(error, httpclient.HTTPError):
+            if error.code == 400:
+                _write_error_batch(batch, database, measurements)
+            elif error.code >= 500:
+                _on_5xx_error(batch, error, database, measurements)
+            else:
+                LOGGER.error('Error submitting %s batch %s to InfluxDB (%s): '
+                             '%s', database, batch, error.code,
+                             error.response.body)
+        elif isinstance(error, (TimeoutError, OSError, socket.error,
+                                select.error, ssl.socket_error)):
+            _on_5xx_error(batch, error, database, measurements)
 
     # If there are futures that remain, try again in 100ms.
     if remaining:
@@ -427,6 +436,21 @@ def _maybe_warn_about_buffer_size():
         LOGGER.warning('InfluxDB measurement buffer has %i entries', count)
 
 
+def _on_5xx_error(batch, error, database, measurements):
+    """Handle a batch submission error, logging the problem and adding the
+    measurements back to the stack.
+
+    :param str batch: The batch ID
+    :param mixed error: The error that was returned
+    :param str database: The database the submission failed for
+    :param list measurements: The measurements to add back to the stack
+
+    """
+    LOGGER.info('Appending %s measurements to stack due to batch %s %r',
+                database, batch, error)
+    _measurements[database] = _measurements[database] + measurements
+
+
 def _on_periodic_callback():
     """Invoked periodically to ensure that metrics that have been collected
     are submitted to InfluxDB. If metrics are still being written when it
@@ -444,19 +468,6 @@ def _on_periodic_callback():
         return
     _periodic_future = _write_measurements()
     return _periodic_future
-
-
-def _on_request_error(error, database, measurements):
-    """Handle a batch submission error, logging the problem and adding the
-    measurements back to the stack.
-
-    :param mixed error: The error that was returned
-    :param str database: The database the submission failed for
-    :param list measurements: The measurements to add back to the stack
-
-    """
-    LOGGER.error('Error submitting batch to %s: %r', database, error)
-    _measurements[database] = measurements + _measurements[database]
 
 
 def _pending_measurements():
@@ -512,13 +523,94 @@ def _write_measurements():
             url, method='POST', body='\n'.join(measurements).encode('utf-8'))
 
         # Keep track of each request in our future stack
-        futures.append((request, database, measurements))
+        futures.append((request, str(uuid.uuid4()), database, measurements))
 
     # Start the wait cycle for all the requests to complete
     _writing = True
     _futures_wait(future, futures)
 
     return future
+
+
+def _write_error_batch(batch, database, measurements):
+    """Invoked when a batch submission fails, this method will submit one
+    measurement to InfluxDB. It then adds a timeout to the IOLoop which will
+    invoke :meth:`_write_error_batch_wait` which will evaluate the result and
+    then determine what to do next.
+
+    :param str batch: The batch ID for correlation purposes
+    :param str database: The database name for the measurements
+    :param list measurements: The measurements that failed to write as a batch
+
+    """
+    if not measurements:
+        LOGGER.info('All %s measurements from batch %s processed',
+                    database, batch)
+        return
+
+    LOGGER.debug('Processing batch %s for %s by measurement, %i left',
+                 batch, database, len(measurements))
+
+    url = '{}?db={}&precision=ms'.format(_base_url, database)
+
+    measurement = measurements.pop(0)
+
+    # Create the request future
+    future = _http_client.fetch(
+        url, method='POST', body=measurement.encode('utf-8'))
+
+    # Check in 25ms to see if it's done
+    _io_loop.add_timeout(_io_loop.time() + 0.025, _write_error_batch_wait,
+                         future, batch, database, measurement, measurements)
+
+
+def _write_error_batch_wait(future, batch, database, measurement, measurements):
+    """Invoked by the IOLoop, this method checks if the HTTP request future
+    created by :meth:`_write_error_batch` is done. If it's done it will
+    evaluate the result, logging any error and moving on to the next
+    measurement. If there are no measurements left in the `measurements`
+    argument, it will consider the batch complete.
+
+
+    :param tornado.concurrent.Future future: The AsyncHTTPClient request future
+    :param str batch: The batch ID
+    :param str database: The database name for the measurements
+    :param str measurement: The measurement the future is for
+    :param list measurements: The measurements that failed to write as a batch
+
+    """
+    if not future.done():
+        _io_loop.add_timeout(_io_loop.time() + 0.025, _write_error_batch_wait,
+                             future, batch, database, measurement,
+                             measurements)
+        return
+
+    error = future.exception()
+    if isinstance(error, httpclient.HTTPError):
+        if error.code == 400:
+            LOGGER.error('Error writing %s measurement from batch %s to '
+                         'InfluxDB (%s): %s', database, batch, error.code,
+                         error.response.body)
+            LOGGER.info('Bad %s measurement from batch %s: %s',
+                        database, batch, measurement)
+        else:
+            LOGGER.error('Error submitting individual metric for %s from batch '
+                         '%s to InfluxDB (%s): %s', database, batch, error.code)
+            measurements = measurements + [measurement]
+    elif isinstance(error, (TimeoutError, OSError, socket.error,
+                            select.error, ssl.socket_error)):
+        LOGGER.error('Error submitting individual metric for %s from batch '
+                     '%s to InfluxDB (%s)', database, batch, error)
+        _write_error_batch(batch, database, measurements + [measurement])
+        measurements = measurements + [measurement]
+
+    if not measurements:
+        LOGGER.info('All %s measurements from batch %s processed',
+                    database, batch)
+        return
+
+    # Continue writing measurements
+    _write_error_batch(batch, database, measurements)
 
 
 class Measurement(object):

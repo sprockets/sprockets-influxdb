@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.2.0`_ (23 Sep 2016)
+----------------------
+- Make the timestamp for a measurement something that can be overridden
+
 `1.1.0`_ (23 Sep 2016)
 ----------------------
 - Submit measurements one at a time for a rejected batch, logging error responses

@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 1, 0)
+version_info = (1, 2, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -646,6 +646,7 @@ class Measurement(object):
         self.name = name
         self.fields = {}
         self.tags = dict(_base_tags)
+        self.timestamp = time.time()
 
     @contextlib.contextmanager
     def duration(self, name):
@@ -675,7 +676,7 @@ class Measurement(object):
             ','.join(['{}={}'.format(self._escape(k), self._escape(v))
                       for k, v in self.tags.items()]),
             self._marshall_fields(),
-            int(time.time() * 1000))
+            int(self.timestamp * 1000))
 
     def set_field(self, name, value):
         """Set the value of a field in the measurement.
@@ -713,6 +714,14 @@ class Measurement(object):
         """
         for key, value in tags.items():
             self.set_tag(key, value)
+
+    def set_timestamp(self, value):
+        """Override the timestamp of a measurement.
+
+        :param float value: The timestamp to assign to the measurement
+
+        """
+        self.timestamp = value
 
     @staticmethod
     def _escape(value):

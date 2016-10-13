@@ -3,6 +3,13 @@
 Release History
 ===============
 
+`1.3.0`_ (12 Oct 2016)
+----------------------
+- Add a flag to disable submission
+- Add more environment variables for configuration
+- Add a maximum buffer size that discards metrics when there are too many
+- Remove correlation-id fields
+
 `1.2.0`_ (23 Sep 2016)
 ----------------------
 - Make the timestamp for a measurement something that can be overridden
@@ -49,7 +56,9 @@ Release History
 ----------------------
 - Initial release
 
-.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.1.0...master
+.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.3.0...master
+.. _1.3.0: https://github.com/sprockets/sprockets-influxdb/compare/1.2.0...1.3.0
+.. _1.2.0: https://github.com/sprockets/sprockets-influxdb/compare/1.1.0...1.2.0
 .. _1.1.0: https://github.com/sprockets/sprockets-influxdb/compare/1.0.7...1.1.0
 .. _1.0.7: https://github.com/sprockets/sprockets-influxdb/compare/1.0.6...1.0.7
 .. _1.0.6: https://github.com/sprockets/sprockets-influxdb/compare/1.0.5...1.0.6

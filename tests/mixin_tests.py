@@ -49,9 +49,6 @@ class MeasurementTestCase(base.AsyncServerTestCase):
             measurement.tags['handler'], 'tests.base.NamedRequestHandler')
         self.assertEqual(measurement.tags['hostname'], socket.gethostname())
         self.assertEqual(measurement.fields['content_length'], 16)
-        self.assertEqual(
-            measurement.fields['correlation_id'],
-            base.NamedRequestHandler.correlation_id)
 
         self.assertGreater(float(measurement.fields['duration']), 0.001)
         self.assertLess(float(measurement.fields['duration']), 0.1)

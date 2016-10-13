@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 3, 0)
+version_info = (1, 3, 1)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -128,8 +128,8 @@ def add_measurement(measurement):
 
     """
     if not _enabled:
-        LOGGER.warning('Discarding measurement for %s while not enabled',
-                       measurement.database)
+        LOGGER.debug('Discarding measurement for %s while not enabled',
+                     measurement.database)
     if _stopping:
         LOGGER.warning('Discarding measurement for %s while stopping',
                        measurement.database)

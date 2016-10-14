@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
-version_info = (1, 3, 2)
+version_info = (1, 4, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']
@@ -248,7 +248,8 @@ def install(url=None, auth_username=None, auth_password=None, io_loop=None,
         _on_periodic_callback, interval, _io_loop)
 
     # Set the base tags
-    _base_tags.setdefault('hostname', socket.gethostname())
+    if os.environ.get('INFLUXDB_TAG_HOSTNAME', 'true') == 'true':
+        _base_tags.setdefault('hostname', socket.gethostname())
     if os.environ.get('ENVIRONMENT'):
         _base_tags.setdefault('environment', os.environ['ENVIRONMENT'])
     _base_tags.update(base_tags or {})

@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`1.4.0`_ (12 Oct 2016)
+----------------------
+- Make the hostname tag optional
+
 `1.3.0`_ (12 Oct 2016)
 ----------------------
 - Add a flag to disable submission

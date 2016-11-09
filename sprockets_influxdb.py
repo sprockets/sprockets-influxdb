@@ -217,15 +217,16 @@ def install(url=None, auth_username=None, auth_password=None, io_loop=None,
         after the last batch submission before submitting a batch that is
         smaller than ``trigger_size``. Default: ``60000``
     :param int max_batch_size: The number of measurements to be submitted in a
-        single HTTP request. Default: ``1000``
+        single HTTP request. Default: ``10000``
     :param int max_clients: The number of simultaneous batch submissions that
         may be made at any given time. Default: ``10``
     :param dict base_tags: Default tags that are to be submitted with each
         measurement.  Default: ``None``
     :param int max_buffer_size: The maximum number of pending measurements
         in the buffer before new measurements are discarded.
+        Default: ``25000``
     :param int trigger_size: The minimum number of measurements that
-        are in the buffer before a batch can be submitted.
+        are in the buffer before a batch can be submitted. Default: ``5000``
     :returns: :data:`True` if the client was installed by this call
         and :data:`False` otherwise.
 

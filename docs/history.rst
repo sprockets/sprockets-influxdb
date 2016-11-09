@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.0.0`_ (09 Nov 2016)
+----------------------
+- Change the way the buffered submission of measurements is handled
+
 `1.4.0`_ (12 Oct 2016)
 ----------------------
 - Make the hostname tag optional
@@ -60,7 +64,9 @@ Release History
 ----------------------
 - Initial release
 
-.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/1.3.0...master
+.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/2.0.0...master
+.. _2.0.0: https://github.com/sprockets/sprockets-influxdb/compare/1.4.0...2.0.0
+.. _1.4.0: https://github.com/sprockets/sprockets-influxdb/compare/1.3.0...1.4.0
 .. _1.3.0: https://github.com/sprockets/sprockets-influxdb/compare/1.2.0...1.3.0
 .. _1.2.0: https://github.com/sprockets/sprockets-influxdb/compare/1.1.0...1.2.0
 .. _1.1.0: https://github.com/sprockets/sprockets-influxdb/compare/1.0.7...1.1.0

@@ -27,31 +27,35 @@ documentation.
 
 The following table details the environment variable configuration options.
 
-+-------------------------------+--------------------------------------------------+---------------+
-| Variable                      | Definition                                       | Default       |
-+===============================+==================================================+===============+
-| ``INFLUXDB_SCHEME``           | The URL request scheme for making HTTP requests  | ``https``     |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_HOST``             | The InfluxDB server hostname                     | ``localhost`` |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_PORT``             | The InfluxDB server port                         | ``8086``      |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_USER``             | The InfluxDB server username                     |               |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_PASSWORD``         | The InfluxDB server password                     |               |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_ENABLED``          | Set to ``false`` to disable InfluxDB support     | ``true``      |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_INTERVAL``         | How often to submit measurements to InfluxDB in  | ``5000``      |
-|                               | milliseconds.                                    |               |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_MAX_BATCH_SIZE``   | Max # of measurements to submit in a batch       | ``5000``      |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_MAX_BUFFER_SIZE``  | Limit of measurements in a buffer before new     | ``20000``     |
-|                               | measurements are discarded.                      |               |
-+-------------------------------+--------------------------------------------------+---------------+
-| ``INFLUXDB_TAG_HOSTNAME``     | Include the hostname as a tag in the measurement | ``true``      |
-+-------------------------------+--------------------------------------------------+---------------+
++------------------------------+--------------------------------------------------+---------------+
+| Variable                     | Definition                                       | Default       |
++==============================+==================================================+===============+
+| ``INFLUXDB_SCHEME``          | The URL request scheme for making HTTP requests  | ``https``     |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_HOST``            | The InfluxDB server hostname                     | ``localhost`` |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_PORT``            | The InfluxDB server port                         | ``8086``      |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_USER``            | The InfluxDB server username                     |               |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_PASSWORD``        | The InfluxDB server password                     |               |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_ENABLED``         | Set to ``false`` to disable InfluxDB support     | ``true``      |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_INTERVAL``        | How many milliseconds to wait before submitting  | ``60000``     |
+|                              | measurements when the buffer has fewer than      |               |
+|                              | ``INFLUXDB_TRIGGER_SIZE`` measurements.          |               |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_MAX_BATCH_SIZE``  | Max # of measurements to submit in a batch       | ``10000``     |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_MAX_BUFFER_SIZE`` | Limit of measurements in a buffer before new     | ``25000``     |
+|                              | measurements are discarded.                      |               |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_TRIGGER_SIZE``    | The number of metrics in the buffer to trigger   | ``60000``     |
+|                              | the submission of a batch.                       |               |
++------------------------------+--------------------------------------------------+---------------+
+| ``INFLUXDB_TAG_HOSTNAME``    | Include the hostname as a tag in the measurement | ``true``      |
++------------------------------+--------------------------------------------------+---------------+
 
 Mixin Configuration
 ^^^^^^^^^^^^^^^^^^^

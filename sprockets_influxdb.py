@@ -587,8 +587,8 @@ def _start_timeout():
 
     LOGGER.debug('Adding a new timeout in %i ms', _timeout_interval)
     _maybe_stop_timeout()
-    _timeout = _io_loop.add_timeout(_io_loop.time() + _timeout_interval / 1000,
-                                    _on_timeout)
+    _timeout = _io_loop.add_timeout(
+        _io_loop.time() + _timeout_interval / 1000.0, _on_timeout)
 
 
 def _trigger_batch_write():
@@ -689,7 +689,8 @@ def _write_error_batch(batch, database, measurements):
                          future, batch, database, measurement, measurements)
 
 
-def _write_error_batch_wait(future, batch, database, measurement, measurements):
+def _write_error_batch_wait(future, batch, database, measurement,
+                            measurements):
     """Invoked by the IOLoop, this method checks if the HTTP request future
     created by :meth:`_write_error_batch` is done. If it's done it will
     evaluate the result, logging any error and moving on to the next
@@ -719,8 +720,9 @@ def _write_error_batch_wait(future, batch, database, measurement, measurements):
             LOGGER.info('Bad %s measurement from batch %s: %s',
                         database, batch, measurement)
         else:
-            LOGGER.error('Error submitting individual metric for %s from batch '
-                         '%s to InfluxDB (%s): %s', database, batch, error.code)
+            LOGGER.error('Error submitting individual metric for %s from '
+                         'batch %s to InfluxDB (%s): %s',
+                         database, batch, error.code)
             measurements = measurements + [measurement]
     elif isinstance(error, (TimeoutError, OSError, socket.error,
                             select.error, ssl.socket_error)):

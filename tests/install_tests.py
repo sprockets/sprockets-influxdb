@@ -46,9 +46,7 @@ class InstallDefaultsTestCase(base.TestCase):
         self.assertEqual(influxdb._io_loop, global_io_loop)
 
     def test_set_submission_interval(self):
-        expectation = 5000
-        self.assertEqual(influxdb._periodic_callback.callback_time,
-                         expectation)
+        self.assertEqual(influxdb._timeout_interval, 60000)
 
 
 class InstallCredentialsTestCase(base.TestCase):
@@ -134,15 +132,12 @@ class SetConfigurationTestCase(base.AsyncTestCase):
         self.assertTrue(influxdb._dirty)
 
     @testing.gen_test()
-    def test_set_submission_interval(self):
+    def test_set_timeout(self):
         io_loop = self.get_new_ioloop()
         influxdb.install(io_loop=io_loop)
         expectation = random.randint(1000, 10000)
-        previous = influxdb._periodic_callback
-        influxdb.set_submission_interval(expectation)
-        self.assertEqual(influxdb._periodic_callback.callback_time,
-                         expectation)
-        self.assertNotEqual(influxdb._periodic_callback, previous)
+        influxdb.set_timeout(expectation)
+        self.assertEqual(influxdb._timeout_interval, expectation)
 
 
 class MeasurementTests(unittest.TestCase):

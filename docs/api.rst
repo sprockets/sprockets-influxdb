@@ -10,6 +10,15 @@ is added to the ``example`` InfluxDB database with the measurement name of
 which calls :meth:`~sprockets_influxdb.shutdown`. :meth:`~sprockets_influxdb.shutdown`
 ensures that all of the buffered metrics are written before the IOLoop is stopped.
 
+Measurements will be sent in batches to InfluxDB when there are
+``INFLUXDB_TRIGGER_SIZE`` measurements in the buffer or after ``INFLUXDB_INTERVAL``
+milliseconds have passed since the last measurement was added,
+which ever occurs first.
+
+The timeout timer for submitting a buffer of < ``INFLUXDB_TRIGGER_SIZE``
+measurements is only started when there isn't an active timer, there is not a
+batch currently being written, and a measurement is added to the buffer.
+
 .. code:: python
 
    import logging
@@ -97,7 +106,8 @@ Configuration Methods
 .. autofunction:: sprockets_influxdb.set_max_batch_size
 .. autofunction:: sprockets_influxdb.set_max_buffer_size
 .. autofunction:: sprockets_influxdb.set_clients
-.. autofunction:: sprockets_influxdb.set_submission_interval
+.. autofunction:: sprockets_influxdb.set_timeout
+.. autofunction:: sprockets_influxdb.set_trigger_size
 
 Request Handler Mixin
 ---------------------

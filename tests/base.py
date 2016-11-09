@@ -43,8 +43,7 @@ def clear_influxdb_module():
     influxdb._measurements = {}
     influxdb._max_batch_size = 5000
     influxdb._max_clients = 10
-    influxdb._periodic_callback = None
-    influxdb._periodic_future = None
+    influxdb._timeout = None
     influxdb._stopping = False
     influxdb._warn_threshold = 5000
     influxdb._writing = False
@@ -89,7 +88,7 @@ class AsyncServerTestCase(testing.AsyncHTTPTestCase):
         sprockets.clients.influxdb are flushed to the server.
 
         """
-        future = influxdb._on_periodic_callback()
+        future = influxdb._on_timeout()
         if future:
             self.io_loop.add_future(future, self.stop)
             self.wait()

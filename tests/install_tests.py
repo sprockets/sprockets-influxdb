@@ -149,6 +149,7 @@ class SetConfigurationTestCase(base.AsyncTestCase):
         influxdb.install()
         with self.assertRaises(ValueError):
             influxdb.set_sample_probability(2.0)
+        with self.assertRaises(ValueError):
             influxdb.set_sample_probability(-1.0)
 
 

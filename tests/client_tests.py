@@ -193,3 +193,32 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.flush()
         value = self.get_measurement()
         self.assertAlmostEqual(float(value.fields['duration-test']), 0.1, 1)
+
+
+class SampleProbabilityTestCase(base.AsyncServerTestCase):
+
+    @staticmethod
+    def setup_batch():
+        influxdb.set_max_batch_size(100)
+        database = str(uuid.uuid4())
+        name = str(uuid.uuid4())
+        for iteration in range(0, 1000):
+            measurement = influxdb.Measurement(database, name)
+            measurement.set_field('test', random.randint(1000, 2000))
+            influxdb.add_measurement(measurement)
+
+    def test_sample_batch_false(self):
+        influxdb.set_sample_probability(0.0)
+        self.setup_batch()
+        self.assertEqual(influxdb._pending_measurements(), 1000)
+        result = influxdb._sample_batch()
+        self.assertFalse(result)
+        self.assertEqual(influxdb._pending_measurements(), 900)
+
+    def test_sample_batch_true(self):
+        influxdb.set_sample_probability(1.0)
+        self.setup_batch()
+        self.assertEqual(influxdb._pending_measurements(), 1000)
+        result = influxdb._sample_batch()
+        self.assertTrue(result)
+        self.assertEqual(influxdb._pending_measurements(), 1000)

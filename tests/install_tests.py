@@ -139,6 +139,18 @@ class SetConfigurationTestCase(base.AsyncTestCase):
         influxdb.set_timeout(expectation)
         self.assertEqual(influxdb._timeout_interval, expectation)
 
+    def test_set_sample_probability(self):
+        influxdb.install()
+        expectation = random.random()
+        influxdb.set_sample_probability(expectation)
+        self.assertEqual(influxdb._sample_probability, expectation)
+
+    def test_set_invalid_sample_probability(self):
+        influxdb.install()
+        with self.assertRaises(ValueError):
+            influxdb.set_sample_probability(2.0)
+            influxdb.set_sample_probability(-1.0)
+
 
 class MeasurementTests(unittest.TestCase):
 

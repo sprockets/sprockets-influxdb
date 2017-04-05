@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.1.0`_ (05 Apr 2017)
+----------------------
+- Add sampling rate for batch submission
+
 `2.0.0`_ (09 Nov 2016)
 ----------------------
 - Change the way the buffered submission of measurements is handled

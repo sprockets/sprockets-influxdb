@@ -50,7 +50,7 @@ The following table details the environment variable configuration options.
 +---------------------------------+--------------------------------------------------+---------------+
 | ``INFLUXDB_MAX_BUFFER_SIZE``    | Limit of measurements in a buffer before new     | ``25000``     |
 |                                 | measurements are discarded.                      |               |
-+------------------------------+-----------------------------------------------------+---------------+
++---------------------------------+--------------------------------------------------+---------------+
 | ``INFLUXDB_SAMPLE_PROBABILITY`` | A value that is >= 0 and <= 1.0 that specifies   | ``1.0``       |
 |                                 | the probability that a batch will be submitted   |               |
 |                                 | to InfluxDB or dropped.                          |               |

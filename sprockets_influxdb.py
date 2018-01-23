@@ -30,6 +30,12 @@ except ImportError:  # pragma: no cover
     logging.critical('Could not import Tornado')
     concurrent, httpclient, ioloop = None, None, None
 
+try:
+    from tornado import routing
+except ImportError:  # Not needed for Tornado<4.5
+    pass
+
+
 version_info = (2, 1, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
@@ -100,15 +106,46 @@ class InfluxDBMixin(object):
             handler = '{}.{}'.format(self.__module__, self.__class__.__name__)
             self.influxdb.set_tags({'handler': handler,
                                     'method': request.method})
-            for host, handlers in application.handlers:
-                if not host.match(request.host):
-                    continue
+
+            pattern = None
+            if hasattr(application, 'handlers'):
+                pattern = self._get_path_pattern_tornado4()
+            else:
+                pattern = self._get_path_pattern_tornado45()
+            if pattern:
+                endpoint = pattern.rstrip('$')
+            else:
+                LOGGER.warning('Unable to determine routing pattern')
+                endpoint = request.path
+            self.influxdb.set_tags({'endpoint': endpoint})
+
+    def _get_path_pattern_tornado4(self):
+        """Return the path pattern used when routing a request. (Tornado<4.5)
+
+        :rtype: str
+        """
+        for host, handlers in self.application.handlers:
+            if host.match(self.request.host):
                 for handler in handlers:
-                    match = handler.regex.match(request.path)
-                    if match:
-                        self.influxdb.set_tag(
-                            'endpoint', handler.regex.pattern.rstrip('$'))
-                        break
+                    if handler.regex.match(self.request.path):
+                        return handler.regex.pattern
+
+    def _get_path_pattern_tornado45(self, router=None):
+        """Return the path pattern used when routing a request. (Tornado>=4.5)
+
+        :param tornado.routing.Router router: (Optional) The router to scan.
+            Defaults to the application's router.
+
+        :rtype: str
+        """
+        if router is None:
+            router = self.application.default_router
+        for rule in router.rules:
+            if rule.matcher.match(self.request) is not None:
+                if isinstance(rule.matcher, routing.PathMatches):
+                    return rule.matcher.regex.pattern
+                elif isinstance(rule.target, routing.Router):
+                    return self._get_path_pattern_tornado45(rule.target)
 
     def on_finish(self):
         if _enabled:

@@ -7,7 +7,7 @@ python:
 install:
  - pip install -r requires/testing.txt
  - pip install wheel
-script: nosetests --with-coverage
+script: tox
 after_success:
  - codecov
 deploy:

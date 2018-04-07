@@ -2,7 +2,7 @@ Sprockets InfluxDB
 ==================
 Buffering InfluxDB client and mixin for Tornado applications
 
-|Version| |Downloads| |Status| |Coverage| |License|
+|Version| |Status| |Coverage| |License|
 
 Installation
 ------------
@@ -118,9 +118,6 @@ Available at https://sprockets-influxdb.readthedocs.org/en/latest/history.html
 
 .. |Coverage| image:: https://img.shields.io/codecov/c/github/sprockets/sprockets-influxdb.svg?
    :target: https://codecov.io/github/sprockets/sprockets-influxdb?branch=master
-
-.. |Downloads| image:: https://img.shields.io/pypi/dm/sprockets-influxdb.svg?
-   :target: https://pypi.python.org/pypi/sprockets-influxdb
 
 .. |License| image:: https://img.shields.io/pypi/l/sprockets-influxdb.svg?
    :target: https://sprockets-influxdb.readthedocs.org

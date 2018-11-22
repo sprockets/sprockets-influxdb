@@ -222,7 +222,7 @@ def flush():
     :rtype: :class:`~tornado.concurrent.Future`
 
     """
-    flush_future = concurrent.TracebackFuture()
+    flush_future = concurrent.Future()
     if _batch_future and not _batch_future.done():
         LOGGER.debug('Flush waiting on incomplete _batch_future')
         _flush_wait(flush_future, _batch_future)
@@ -696,7 +696,7 @@ def _write_measurements():
     """
     global _timeout, _writing
 
-    future = concurrent.TracebackFuture()
+    future = concurrent.Future()
 
     if _writing:
         LOGGER.warning('Currently writing measurements, skipping write')

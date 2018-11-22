@@ -1,5 +1,9 @@
+import mock
 import socket
 import time
+import unittest
+
+import tornado
 
 from . import base
 
@@ -66,3 +70,65 @@ class MeasurementTestCase(base.AsyncServerTestCase):
         self.assertEqual(measurement.tags['method'], 'GET')
         self.assertEqual(measurement.tags['endpoint'], '/param/(?P<id>\d+)')
         self.assertEqual(measurement.fields['content_length'], 13)
+
+    def test_measurement_with_specific_host(self):
+        self.application.add_handlers(
+            'some_host', [('/host/(?P<id>\d+)', base.ParamRequestHandler)])
+        result = self.fetch('/host/100', headers={'Host': 'some_host'})
+        self.assertEqual(result.code, 200)
+        measurement = self.get_measurement()
+        self.assertIsNotNone(measurement)
+        self.assertEqual(measurement.db, 'database-name')
+        self.assertEqual(measurement.name, 'my-service')
+        self.assertEqual(measurement.tags['status_code'], '200')
+        self.assertEqual(measurement.tags['method'], 'GET')
+        self.assertEqual(measurement.tags['endpoint'], '/host/(?P<id>\d+)')
+        self.assertEqual(measurement.fields['content_length'], 13)
+
+    @unittest.skipIf(tornado.version_info >= (4, 5),
+                     'legacy routing removed in 4.5')
+    @mock.patch(
+        'sprockets_influxdb.InfluxDBMixin._get_path_pattern_tornado45')
+    @mock.patch(
+        'sprockets_influxdb.InfluxDBMixin._get_path_pattern_tornado4')
+    def test_mesurement_with_ambiguous_route_4(self, mock_4, mock_45):
+        mock_4.return_value = None
+        mock_45.return_value = None
+
+        result = self.fetch('/param/100')
+        self.assertEqual(result.code, 200)
+        measurement = self.get_measurement()
+        self.assertIsNotNone(measurement)
+        self.assertEqual(measurement.db, 'database-name')
+        self.assertEqual(measurement.name, 'my-service')
+        self.assertEqual(measurement.tags['status_code'], '200')
+        self.assertEqual(measurement.tags['method'], 'GET')
+        self.assertEqual(measurement.tags['endpoint'], '/param/100')
+        self.assertEqual(measurement.fields['content_length'], 13)
+
+        self.assertEqual(1, mock_4.call_count)
+        self.assertEqual(0, mock_45.call_count)
+
+    @unittest.skipIf(tornado.version_info < (4, 5),
+                     'routing module introduced in tornado 4.5')
+    @mock.patch(
+        'sprockets_influxdb.InfluxDBMixin._get_path_pattern_tornado45')
+    @mock.patch(
+        'sprockets_influxdb.InfluxDBMixin._get_path_pattern_tornado4')
+    def test_mesurement_with_ambiguous_route_45(self, mock_4, mock_45):
+        mock_4.return_value = None
+        mock_45.return_value = None
+
+        result = self.fetch('/param/100')
+        self.assertEqual(result.code, 200)
+        measurement = self.get_measurement()
+        self.assertIsNotNone(measurement)
+        self.assertEqual(measurement.db, 'database-name')
+        self.assertEqual(measurement.name, 'my-service')
+        self.assertEqual(measurement.tags['status_code'], '200')
+        self.assertEqual(measurement.tags['method'], 'GET')
+        self.assertEqual(measurement.tags['endpoint'], '/param/100')
+        self.assertEqual(measurement.fields['content_length'], 13)
+
+        self.assertEqual(0, mock_4.call_count)
+        self.assertEqual(1, mock_45.call_count)

@@ -41,10 +41,6 @@ class InstallDefaultsTestCase(base.TestCase):
         self.assertEqual(influxdb._http_client.defaults['user_agent'],
                          influxdb.USER_AGENT)
 
-    def test_set_io_loop(self):
-        global_io_loop = ioloop.IOLoop.current()
-        self.assertEqual(influxdb._io_loop, global_io_loop)
-
     def test_set_submission_interval(self):
         self.assertEqual(influxdb._timeout_interval, 60000)
 
@@ -103,21 +99,6 @@ class SetConfigurationTestCase(base.AsyncTestCase):
         self.assertEqual(influxdb._base_url, expectation)
         self.assertTrue(influxdb._dirty)
 
-    def test_set_io_loop_invalid_raises(self):
-        influxdb.install()
-        with self.assertRaises(ValueError):
-            influxdb.set_io_loop('bad value')
-
-    def test_set_io_loop(self):
-        influxdb.install()
-        previous = influxdb._io_loop
-        io_loop = self.get_new_ioloop()
-
-        influxdb.set_io_loop(io_loop)
-        self.assertEqual(influxdb._io_loop, io_loop)
-        self.assertNotEqual(io_loop, previous)
-        self.assertTrue(influxdb._dirty)
-
     def test_set_max_batch_size(self):
         influxdb.install()
         expectation = random.randint(1000, 100000)
@@ -133,8 +114,7 @@ class SetConfigurationTestCase(base.AsyncTestCase):
 
     @testing.gen_test()
     def test_set_timeout(self):
-        io_loop = self.get_new_ioloop()
-        influxdb.install(io_loop=io_loop)
+        influxdb.install()
         expectation = random.randint(1000, 10000)
         influxdb.set_timeout(expectation)
         self.assertEqual(influxdb._timeout_interval, expectation)

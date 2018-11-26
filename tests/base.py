@@ -38,7 +38,6 @@ def clear_influxdb_module():
     influxdb._dirty = False
     influxdb._http_client = None
     influxdb._installed = False
-    influxdb._io_loop = None
     influxdb._last_warning = None
     influxdb._measurements = {}
     influxdb._max_batch_size = 5000

@@ -1,11 +1,14 @@
 sudo: false
 language: python
+dist: xenial
+sudo: required
 python:
  - 2.7
  - 3.5
  - 3.6
- - 3.7-dev
+ - 3.7
 install:
+ - sudo apt-get install libgnutls28-dev
  - pip install -r requires/testing.txt
  - pip install wheel
 script: tox

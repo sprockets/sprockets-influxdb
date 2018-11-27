@@ -36,7 +36,7 @@ except ImportError:  # Not needed for Tornado<4.5
     pass
 
 
-version_info = (2, 1, 0)
+version_info = (2, 2, 0)
 __version__ = '.'.join(str(v) for v in version_info)
 __all__ = ['__version__', 'version_info', 'add_measurement', 'flush',
            'install', 'shutdown', 'Measurement']

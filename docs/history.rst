@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.2.0`_ (27 Nov 2018)
+----------------------
+- Add support for Tornado < 6
+
 `2.1.0`_ (05 Apr 2017)
 ----------------------
 - Add sampling rate for batch submission
@@ -68,7 +72,8 @@ Release History
 ----------------------
 - Initial release
 
-.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/2.1.0...master
+.. _Next Release: https://github.com/sprockets/sprockets-influxdb/compare/2.2.0...master
+.. _2.2.0: https://github.com/sprockets/sprockets-influxdb/compare/2.1.0...2.2.0
 .. _2.1.0: https://github.com/sprockets/sprockets-influxdb/compare/2.0.0...2.1.0
 .. _2.0.0: https://github.com/sprockets/sprockets-influxdb/compare/1.4.0...2.0.0
 .. _1.4.0: https://github.com/sprockets/sprockets-influxdb/compare/1.3.0...1.4.0

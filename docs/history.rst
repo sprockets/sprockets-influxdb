@@ -3,6 +3,10 @@
 Release History
 ===============
 
+`2.2.1`_ (14 Nov 2019)
+----------------------
+- Add support for Tornado < 7
+
 `2.2.0`_ (27 Nov 2018)
 ----------------------
 - Add support for Tornado < 6
